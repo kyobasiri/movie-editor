@@ -6,6 +6,7 @@
         xmlns:local="using:VideoEditor"
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
         x:Class="VideoEditor.MainWindow"
+        x:DataType="local:MainWindow"
         Title="VideoEditor">
 
     <Grid ColumnDefinitions="300, *">
@@ -26,11 +27,11 @@
                         <StackPanel x:Name="VideoPropertiesPanel" Orientation="Vertical" IsVisible="False">
                             <TextBlock Text="Rotation:" Margin="0,5,0,2"/>
                             <ComboBox x:Name="RotationComboBox" SelectionChanged="RotationComboBox_SelectionChanged">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate>
+                                <!-- <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="local:VideoRotation">
                                         <TextBlock Text="{Binding Converter={x:Static local:EnumConverters.VideoRotationToString}}"/>
                                     </DataTemplate>
-                                </ComboBox.ItemTemplate>
+                                </ComboBox.ItemTemplate> -->
                             </ComboBox>
 
                             <TextBlock Text="Flip:" Margin="0,5,0,2"/>
@@ -51,7 +52,13 @@
                             </DockPanel>
 
                             <TextBlock Text="Text Overlays:" FontWeight="Bold" Margin="0,15,0,5"/>
-                            <ListBox x:Name="OverlaysListBox" Height="100" DisplayMemberBinding="{Binding Text}"/>
+                            <ListBox x:Name="OverlaysListBox" Height="100">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="local:TextOverlay">
+                                        <TextBlock Text="{Binding Text}"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5" Margin="0,5,0,0">
                                 <Button Content="Add" Click="AddOverlayButton_Click"/>
                                 <Button Content="Edit" Click="EditOverlayButton_Click"/>
@@ -69,8 +76,12 @@
                 </Border>
             </StackPanel>
 
-            <ListBox x:Name="MediaListBox" Margin="5" SelectionChanged="MediaListBox_SelectionChanged" DisplayMemberBinding="{Binding DisplayName}">
-                <!-- VideoClip objects will be displayed here -->
+            <ListBox x:Name="MediaListBox" Margin="5" SelectionChanged="MediaListBox_SelectionChanged">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="local:ITimelineItem">
+                        <TextBlock Text="{Binding DisplayName}"/>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
             </ListBox>
         </DockPanel>
 
@@ -82,7 +93,7 @@
             <!-- Video Timeline Panel -->
             <Border Grid.Row="1" BorderBrush="Gray" BorderThickness="0,1,0,0">
                 <ScrollViewer HorizontalScrollBarVisibility="Auto">
-                    <ItemsControl x:Name="TimelineItemsControl" AllowDrop="True"
+                    <ItemsControl x:Name="TimelineItemsControl" DragDrop.AllowDrop="True"
                                   DragDrop.DragOver="Timeline_DragOver"
                                   DragDrop.Drop="Timeline_Drop">
                         <ItemsControl.ItemsPanel>
@@ -91,7 +102,7 @@
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="local:ITimelineItem">
                                 <!-- A simple representation of a video clip -->
                                 <Border BorderBrush="Black" BorderThickness="1" Margin="2" Background="LightSkyBlue" Height="60"
                                         PointerPressed="TimelineItem_PointerPressed">
@@ -116,7 +127,7 @@
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="local:AudioClip">
                                 <!-- A simple representation of an audio clip -->
                                 <Border BorderBrush="Black" BorderThickness="1" Margin="2" Background="LightGreen" Height="60">
                                     <StackPanel Orientation="Vertical" Margin="5">
