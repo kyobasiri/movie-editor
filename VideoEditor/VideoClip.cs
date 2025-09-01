@@ -11,6 +11,21 @@ public enum VideoRotation
     Rotate270
 }
 
+public enum VideoFlip
+{
+    None,
+    Horizontal,
+    Vertical
+}
+
+public enum VideoFilterType
+{
+    None,
+    Sepia,
+    Monochrome,
+    Vintage
+}
+
 public class VideoClip : ITimelineItem
 {
     /// <summary>
@@ -34,9 +49,29 @@ public class VideoClip : ITimelineItem
     public VideoRotation Rotation { get; set; } = VideoRotation.None;
 
     /// <summary>
+    /// Gets or sets the flip to be applied to the video clip.
+    /// </summary>
+    public VideoFlip Flip { get; set; } = VideoFlip.None;
+
+    /// <summary>
     /// Gets or sets the playback speed of the clip (1.0 is normal speed).
     /// </summary>
     public float Speed { get; set; } = 1.0f;
+
+    /// <summary>
+    /// Gets or sets the volume of the clip's audio (0.0 to 1.0).
+    /// </summary>
+    public double Volume { get; set; } = 1.0;
+
+    /// <summary>
+    /// Gets or sets the list of text overlays for this clip.
+    /// </summary>
+    public List<TextOverlay> Overlays { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the visual filter to be applied to the video clip.
+    /// </summary>
+    public VideoFilterType Filter { get; set; } = VideoFilterType.None;
 
     /// <summary>
     /// Gets the duration of this clip, adjusted for speed.
@@ -48,7 +83,7 @@ public class VideoClip : ITimelineItem
     /// </summary>
     public string DisplayName { get; }
 
-    public VideoClip(string sourcePath, TimeSpan trimStart, TimeSpan trimEnd, VideoRotation rotation = VideoRotation.None, float speed = 1.0f)
+    public VideoClip(string sourcePath, TimeSpan trimStart, TimeSpan trimEnd, VideoRotation rotation = VideoRotation.None, float speed = 1.0f, VideoFlip flip = VideoFlip.None, double volume = 1.0, VideoFilterType filter = VideoFilterType.None)
     {
         if (!File.Exists(sourcePath))
         {
@@ -75,6 +110,9 @@ public class VideoClip : ITimelineItem
         TrimEnd = trimEnd;
         Rotation = rotation;
         Speed = speed;
+        Flip = flip;
+        Volume = volume;
+        Filter = filter;
         DisplayName = Path.GetFileName(sourcePath);
     }
 
@@ -83,6 +121,9 @@ public class VideoClip : ITimelineItem
     /// </summary>
     public VideoClip CloneWithNewTimes(TimeSpan newTrimStart, TimeSpan newTrimEnd)
     {
-        return new VideoClip(this.SourcePath, newTrimStart, newTrimEnd, this.Rotation, this.Speed);
+        var newClip = new VideoClip(this.SourcePath, newTrimStart, newTrimEnd, this.Rotation, this.Speed, this.Flip, this.Volume, this.Filter);
+        // Perform a shallow copy of the overlays. For a more robust solution, deep cloning might be needed.
+        newClip.Overlays.AddRange(this.Overlays);
+        return newClip;
     }
 }
