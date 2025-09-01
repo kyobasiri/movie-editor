@@ -13,6 +13,7 @@
         <DockPanel Grid.Column="0">
             <StackPanel DockPanel.Dock="Top" Orientation="Vertical">
                 <Button Content="Add Media" Margin="5" Click="AddMediaButton_Click"/>
+                <Button Content="Add Audio" Margin="5,0,5,5" Click="AddAudioButton_Click"/>
                 <Button x:Name="SplitButton" Content="Split Clip" Margin="5,0,5,5" Click="SplitButton_Click"/>
                 <Button x:Name="ExportButton" Content="Export Video" Margin="5,0,5,5" Click="ExportButton_Click"/>
 
@@ -21,18 +22,49 @@
                     <StackPanel Orientation="Vertical">
                         <TextBlock Text="Clip Properties" FontWeight="Bold" Margin="0,0,0,5"/>
 
-                        <TextBlock Text="Rotation:" Margin="0,5,0,2"/>
-                        <ComboBox x:Name="RotationComboBox" SelectionChanged="RotationComboBox_SelectionChanged">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Converter={x:Static local:EnumConverters.VideoRotationToString}}"/>
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
+                        <!-- Video-specific properties -->
+                        <StackPanel x:Name="VideoPropertiesPanel" Orientation="Vertical" IsVisible="False">
+                            <TextBlock Text="Rotation:" Margin="0,5,0,2"/>
+                            <ComboBox x:Name="RotationComboBox" SelectionChanged="RotationComboBox_SelectionChanged">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Converter={x:Static local:EnumConverters.VideoRotationToString}}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
 
-                        <TextBlock Text="Speed:" Margin="0,10,0,2"/>
-                        <NumericUpDown x:Name="SpeedUpDown" ValueChanged="SpeedUpDown_ValueChanged"
-                                       Minimum="0.1" Maximum="10.0" Increment="0.1" FormatString="F1"/>
+                            <TextBlock Text="Flip:" Margin="0,5,0,2"/>
+                            <ComboBox x:Name="FlipComboBox" SelectionChanged="FlipComboBox_SelectionChanged"/>
+
+                            <TextBlock Text="Filter:" Margin="0,5,0,2"/>
+                            <ComboBox x:Name="FilterComboBox" SelectionChanged="FilterComboBox_SelectionChanged"/>
+
+                            <TextBlock Text="Speed:" Margin="0,10,0,2"/>
+                            <NumericUpDown x:Name="SpeedUpDown" ValueChanged="SpeedUpDown_ValueChanged"
+                                           Minimum="0.1" Maximum="10.0" Increment="0.1" FormatString="F1"/>
+
+                            <TextBlock Text="Volume:" Margin="0,10,0,2"/>
+                            <DockPanel>
+                                <TextBlock Text="{Binding #VideoVolumeSlider.Value, StringFormat='{}{0:F2}'}" DockPanel.Dock="Right" Margin="10,0,0,0"/>
+                                <Slider x:Name="VideoVolumeSlider" Minimum="0.0" Maximum="2.0" Value="1.0"
+                                        ValueChanged="VideoVolumeSlider_ValueChanged"/>
+                            </DockPanel>
+
+                            <TextBlock Text="Text Overlays:" FontWeight="Bold" Margin="0,15,0,5"/>
+                            <ListBox x:Name="OverlaysListBox" Height="100" DisplayMemberBinding="{Binding Text}"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5" Margin="0,5,0,0">
+                                <Button Content="Add" Click="AddOverlayButton_Click"/>
+                                <Button Content="Edit" Click="EditOverlayButton_Click"/>
+                                <Button Content="Remove" Click="RemoveOverlayButton_Click"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Image-specific properties -->
+                        <StackPanel x:Name="ImageDurationPanel" Orientation="Vertical" IsVisible="False">
+                            <TextBlock Text="Duration (seconds):" Margin="0,10,0,2"/>
+                            <NumericUpDown x:Name="ImageDurationUpDown" ValueChanged="ImageDurationUpDown_ValueChanged"
+                                           Minimum="0.1" Maximum="3600" Increment="0.5" FormatString="F1"/>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
             </StackPanel>
@@ -43,14 +75,16 @@
         </DockPanel>
 
         <!-- Main Area (Preview and Timeline) -->
-        <Grid Grid.Column="1" RowDefinitions="*, 300">
+        <Grid Grid.Column="1" RowDefinitions="*, 300, 100">
             <!-- Video Preview Panel -->
             <vlc:VideoView x:Name="VideoView" Grid.Row="0" />
 
-            <!-- Timeline Panel -->
+            <!-- Video Timeline Panel -->
             <Border Grid.Row="1" BorderBrush="Gray" BorderThickness="0,1,0,0">
                 <ScrollViewer HorizontalScrollBarVisibility="Auto">
-                    <ItemsControl x:Name="TimelineItemsControl">
+                    <ItemsControl x:Name="TimelineItemsControl" AllowDrop="True"
+                                  DragDrop.DragOver="Timeline_DragOver"
+                                  DragDrop.Drop="Timeline_Drop">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel Orientation="Horizontal" />
@@ -59,10 +93,36 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <!-- A simple representation of a video clip -->
-                                <Border BorderBrush="Black" BorderThickness="1" Margin="2" Background="LightSkyBlue" Height="60">
+                                <Border BorderBrush="Black" BorderThickness="1" Margin="2" Background="LightSkyBlue" Height="60"
+                                        PointerPressed="TimelineItem_PointerPressed">
+                                    <StackPanel Orientation="Vertical" Margin="5" IsHitTestVisible="False">
+                                        <TextBlock Text="{Binding DisplayName}" FontWeight="Bold"/>
+                                        <TextBlock Text="{Binding Duration, StringFormat='Duration: {0:hh\\:mm\\:ss}'}"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Audio Timeline Panel -->
+            <Border Grid.Row="2" BorderBrush="Gray" BorderThickness="0,1,0,0">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto">
+                    <ItemsControl x:Name="AudioTimelineItemsControl">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <!-- A simple representation of an audio clip -->
+                                <Border BorderBrush="Black" BorderThickness="1" Margin="2" Background="LightGreen" Height="60">
                                     <StackPanel Orientation="Vertical" Margin="5">
                                         <TextBlock Text="{Binding DisplayName}" FontWeight="Bold"/>
                                         <TextBlock Text="{Binding Duration, StringFormat='Duration: {0:hh\\:mm\\:ss}'}"/>
+                                        <Slider Minimum="0.0" Maximum="2.0" Value="{Binding Volume, Mode=TwoWay}" Margin="0,5,0,0"/>
                                     </StackPanel>
                                 </Border>
                             </DataTemplate>
