@@ -1,28 +1,29 @@
-# VideoEditor MVP
+# ビデオエディタ MVP
 
-This is an MVP (Minimum Viable Product) for a video editor application built with .NET 8 and Avalonia UI.
+これは、.NET 8とAvalonia UIで構築されたビデオエディタアプリケーションのMVP（Minimum Viable Product）です。
 
-## Features
+## 機能
 
-*   **Media Loading:** Add multiple video files to a media list.
-*   **Video Preview:** Select a video from the list to play it in the preview pane. (Powered by LibVLCSharp)
-*   **Video Concatenation:** Export all videos in the media list into a single `output.mp4` file. (Powered by FFmpeg)
+*   **メディア読み込み:** 複数のビデオファイルをメディアリストに追加します。
+*   **ビデオプレビュー:** リストからビデオを選択すると、プレビューペインで再生されます。（LibVLCSharpを利用）
+*   **ビデオ結合:** メディアリスト内のすべてのビデオを、単一の`output.mp4`ファイルに書き出します。（FFmpegを利用）
+*   **ビデオ分割:** プレビューの再生位置でクリップを分割します。
 
-## How to Build
+## ビルド方法
 
-1.  Ensure you have the .NET 8 SDK installed.
-2.  Run the following command in the root directory:
+1.  .NET 8 SDKがインストールされていることを確認してください。
+2.  ルートディレクトリで次のコマンドを実行します:
     ```bash
     dotnet build
     ```
 
-## Runtime Dependencies
+## 実行時の依存関係
 
 ### Linux
 
-This application uses `LibVLCSharp` for video playback, which depends on a system-wide installation of LibVLC.
+このアプリケーションはビデオ再生に`LibVLCSharp`を使用しており、システム全体にインストールされたLibVLCに依存しています。
 
-On Debian-based distributions (like Ubuntu), you can install the necessary packages with:
+Debianベースのディストリビューション（Ubuntuなど）では、次のコマンドで必要なパッケージをインストールできます:
 
 ```bash
 sudo apt-get update
@@ -31,4 +32,4 @@ sudo apt-get install -y libvlc-dev libvlc5
 
 ### Windows & macOS
 
-The necessary native libraries for VLC are bundled with the application via NuGet packages and should work out of the box.
+VLCに必要なネイティブライブラリは、NuGetパッケージを介してアプリケーションにバンドルされており、追加設定なしで動作するはずです。
