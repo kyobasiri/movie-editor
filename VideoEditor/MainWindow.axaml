@@ -12,10 +12,11 @@
         <DockPanel Grid.Column="0">
             <StackPanel DockPanel.Dock="Top" Orientation="Vertical">
                 <Button Content="Add Media" Margin="5" Click="AddMediaButton_Click"/>
+                <Button x:Name="SplitButton" Content="Split Clip" Margin="5,0,5,5" Click="SplitButton_Click"/>
                 <Button x:Name="ExportButton" Content="Export Video" Margin="5,0,5,5" Click="ExportButton_Click"/>
             </StackPanel>
-            <ListBox x:Name="MediaListBox" Margin="5" SelectionChanged="MediaListBox_SelectionChanged">
-                <!-- Media file paths will be displayed here -->
+            <ListBox x:Name="MediaListBox" Margin="5" SelectionChanged="MediaListBox_SelectionChanged" DisplayMemberBinding="{Binding DisplayName}">
+                <!-- VideoClip objects will be displayed here -->
             </ListBox>
         </DockPanel>
 
@@ -26,7 +27,26 @@
 
             <!-- Timeline Panel -->
             <Border Grid.Row="1" BorderBrush="Gray" BorderThickness="0,1,0,0">
-                <TextBlock Text="Timeline" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <ScrollViewer HorizontalScrollBarVisibility="Auto">
+                    <ItemsControl x:Name="TimelineItemsControl">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <!-- A simple representation of a video clip -->
+                                <Border BorderBrush="Black" BorderThickness="1" Margin="2" Background="LightSkyBlue" Height="60">
+                                    <StackPanel Orientation="Vertical" Margin="5">
+                                        <TextBlock Text="{Binding DisplayName}" FontWeight="Bold"/>
+                                        <TextBlock Text="{Binding Duration, StringFormat='Duration: {0:hh\\:mm\\:ss}'}"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
             </Border>
         </Grid>
     </Grid>
