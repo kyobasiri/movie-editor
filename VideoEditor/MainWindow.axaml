@@ -1,0 +1,34 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vlc="using:LibVLCSharp.Avalonia"
+        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
+        x:Class="VideoEditor.MainWindow"
+        Title="VideoEditor">
+
+    <Grid ColumnDefinitions="300, *">
+        <!-- Media Library Panel -->
+        <DockPanel Grid.Column="0">
+            <StackPanel DockPanel.Dock="Top" Orientation="Vertical">
+                <Button Content="Add Media" Margin="5" Click="AddMediaButton_Click"/>
+                <Button x:Name="ExportButton" Content="Export Video" Margin="5,0,5,5" Click="ExportButton_Click"/>
+            </StackPanel>
+            <ListBox x:Name="MediaListBox" Margin="5" SelectionChanged="MediaListBox_SelectionChanged">
+                <!-- Media file paths will be displayed here -->
+            </ListBox>
+        </DockPanel>
+
+        <!-- Main Area (Preview and Timeline) -->
+        <Grid Grid.Column="1" RowDefinitions="*, 300">
+            <!-- Video Preview Panel -->
+            <vlc:VideoView x:Name="VideoView" Grid.Row="0" />
+
+            <!-- Timeline Panel -->
+            <Border Grid.Row="1" BorderBrush="Gray" BorderThickness="0,1,0,0">
+                <TextBlock Text="Timeline" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+        </Grid>
+    </Grid>
+
+</Window>

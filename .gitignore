@@ -1,0 +1,20 @@
+# User-specific files
+*.user
+*.suo
+*.userosscache
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+[Bb]in/
+[Oo]bj/
+
+# Rider files
+.idea/
+*.sln.iml
+
+# Visual Studio 2015 cache/options
+.vs/
+
+# Mac files
+.DS_Store
