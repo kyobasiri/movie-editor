@@ -230,7 +230,7 @@ public partial class MainWindow : Window
             {
                 var mediaInfo = await FFmpeg.GetMediaInfo(firstVideo.SourcePath);
                 var videoStream = mediaInfo.VideoStreams.First();
-                resolution = videoStream.Resolution;
+                resolution = $"{videoStream.Width}x{videoStream.Height}";
                 frameRate = videoStream.Framerate.ToString(CultureInfo.InvariantCulture);
             }
 
@@ -333,7 +333,7 @@ public partial class MainWindow : Window
                 {
                     // ... (same as before)
                     conversion = FFmpeg.Conversions.New()
-                        .AddParameter("-loop 1", true)
+                        .AddParameter("-loop 1", ParameterPosition.PreInput)
                         .AddParameter($"-i \"{imageClip.SourcePath}\"")
                         .AddParameter($"-t {imageClip.Duration.TotalSeconds}")
                         .AddParameter($"-s {resolution}")
@@ -434,28 +434,37 @@ public partial class MainWindow : Window
     {
         if (_isUpdatingClipProperties || MediaListBox.SelectedItem is not VideoClip clip || e.AddedItems.Count == 0)
             return;
-        clip.Rotation = (VideoRotation)e.AddedItems[0]!;
+        if (e.AddedItems[0] is VideoRotation rotation)
+        {
+            clip.Rotation = rotation;
+        }
     }
 
     private void FlipComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_isUpdatingClipProperties || MediaListBox.SelectedItem is not VideoClip clip || e.AddedItems.Count == 0)
             return;
-        clip.Flip = (VideoFlip)e.AddedItems[0]!;
+        if (e.AddedItems[0] is VideoFlip flip)
+        {
+            clip.Flip = flip;
+        }
     }
 
     private void FilterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_isUpdatingClipProperties || MediaListBox.SelectedItem is not VideoClip clip || e.AddedItems.Count == 0)
             return;
-        clip.Filter = (VideoFilterType)e.AddedItems[0]!;
+        if (e.AddedItems[0] is VideoFilterType filter)
+        {
+            clip.Filter = filter;
+        }
     }
 
     private void SpeedUpDown_ValueChanged(object sender, NumericUpDownValueChangedEventArgs e)
     {
-        if (_isUpdatingClipProperties || MediaListBox.SelectedItem is not VideoClip clip)
+        if (_isUpdatingClipProperties || MediaListBox.SelectedItem is not VideoClip clip || !e.NewValue.HasValue)
             return;
-        clip.Speed = (float)e.NewValue;
+        clip.Speed = (float)e.NewValue.Value;
         if (_mediaPlayer.IsPlaying)
         {
             _mediaPlayer.SetRate(clip.Speed);
@@ -471,9 +480,9 @@ public partial class MainWindow : Window
 
     private void ImageDurationUpDown_ValueChanged(object sender, NumericUpDownValueChangedEventArgs e)
     {
-        if (_isUpdatingClipProperties || MediaListBox.SelectedItem is not ImageClip clip)
+        if (_isUpdatingClipProperties || MediaListBox.SelectedItem is not ImageClip clip || !e.NewValue.HasValue)
             return;
-        clip.Duration = TimeSpan.FromSeconds((double)e.NewValue);
+        clip.Duration = TimeSpan.FromSeconds((double)e.NewValue.Value);
     }
 
     private async void AddOverlayButton_Click(object? sender, RoutedEventArgs e)
