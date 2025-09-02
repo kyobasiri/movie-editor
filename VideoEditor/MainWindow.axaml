@@ -76,7 +76,8 @@
                 </Border>
             </StackPanel>
 
-            <ListBox x:Name="MediaListBox" Margin="5" SelectionChanged="MediaListBox_SelectionChanged">
+            <ListBox x:Name="MediaListBox" Margin="5" SelectionChanged="MediaListBox_SelectionChanged"
+                     PointerPressed="MediaLibrary_PointerPressed">
                 <ListBox.ItemTemplate>
                     <DataTemplate x:DataType="local:ITimelineItem">
                         <TextBlock Text="{Binding DisplayName}"/>

@@ -19,6 +19,7 @@ namespace VideoEditor;
 
 public partial class MainWindow : Window
 {
+    private readonly ObservableCollection<ITimelineItem> _mediaLibrary = new();
     private readonly ObservableCollection<ITimelineItem> _timelineClips = new();
     private readonly ObservableCollection<AudioClip> _audioClips = new();
     private readonly LibVLC _libVLC;
@@ -35,7 +36,7 @@ public partial class MainWindow : Window
         _mediaPlayer = new MediaPlayer(_libVLC);
         VideoView.MediaPlayer = _mediaPlayer;
 
-        MediaListBox.ItemsSource = _timelineClips;
+        MediaListBox.ItemsSource = _mediaLibrary;
         TimelineItemsControl.ItemsSource = _timelineClips;
         AudioTimelineItemsControl.ItemsSource = _audioClips;
 
@@ -76,13 +77,13 @@ public partial class MainWindow : Window
             {
                 if (new[] { ".png", ".jpg", ".jpeg", ".bmp" }.Contains(extension))
                 {
-                    _timelineClips.Add(new ImageClip(path, TimeSpan.FromSeconds(5)));
+                    _mediaLibrary.Add(new ImageClip(path, TimeSpan.FromSeconds(5)));
                 }
                 else
                 {
                     var mediaInfo = await FFmpeg.GetMediaInfo(path);
                     var duration = mediaInfo.Duration;
-                    _timelineClips.Add(new VideoClip(path, TimeSpan.Zero, duration));
+                    _mediaLibrary.Add(new VideoClip(path, TimeSpan.Zero, duration));
                 }
             }
             catch (Exception ex)
@@ -539,6 +540,16 @@ public partial class MainWindow : Window
         OverlaysListBox.ItemsSource = selectedClip.Overlays;
     }
 
+    private async void MediaLibrary_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is not ListBox { SelectedItem: ITimelineItem item }) return;
+
+        var data = new DataObject();
+        data.Set("MediaLibraryItem", item);
+
+        await DragDrop.DoDragDrop(e, data, DragDropEffects.Copy);
+    }
+
     private async void TimelineItem_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (sender is not Border { DataContext: ITimelineItem item }) return;
@@ -557,7 +568,7 @@ public partial class MainWindow : Window
     private void Timeline_DragOver(object? sender, DragEventArgs e)
     {
         e.DragEffects &= (DragDropEffects.Move | DragDropEffects.Copy);
-        if (!e.Data.Contains("TimelineItem"))
+        if (!e.Data.Contains("TimelineItem") && !e.Data.Contains("MediaLibraryItem"))
         {
             e.DragEffects = DragDropEffects.None;
         }
@@ -565,61 +576,68 @@ public partial class MainWindow : Window
 
     private void Timeline_Drop(object? sender, DragEventArgs e)
     {
-        if (!e.Data.Contains("TimelineItem")) return;
-
-        var draggedItem = e.Data.Get("TimelineItem") as ITimelineItem;
-        if (draggedItem == null) return;
-
         var targetControl = e.Source as Control;
         if (targetControl == null) return;
-
-        // Find the ItemsControl, which is the drop target
         var itemsControl = sender as ItemsControl;
         if (itemsControl == null) return;
 
         // Find the item we are dropping on top of.
-        // We need to walk up the visual tree from the source control until we find an element
-        // that is a direct child of the ItemsControl's panel.
         Control? targetItemContainer = null;
         var current = targetControl;
         while (current != null)
         {
             var parent = current.Parent as Control;
-            if (parent == itemsControl.ItemsPanelRoot)
-            {
-                targetItemContainer = current;
-                break;
-            }
-            if (parent == null || parent == itemsControl) // Stop if we reach the ItemsControl itself or null
-            {
-                break;
-            }
+            if (parent == itemsControl.ItemsPanelRoot) { targetItemContainer = current; break; }
+            if (parent == null || parent == itemsControl) { break; }
             current = parent;
         }
-
-        var oldIndex = _timelineClips.IndexOf(draggedItem);
-        if (oldIndex < 0) return;
-
-        var newIndex = -1;
-
+        int newIndex = -1;
         if (targetItemContainer?.DataContext is ITimelineItem targetItem)
         {
             newIndex = _timelineClips.IndexOf(targetItem);
         }
         else
         {
-            // Dropped on the panel but not on an item, so add to the end.
-            newIndex = _timelineClips.Count - 1;
+            newIndex = _timelineClips.Count;
         }
+        if (newIndex < 0) { newIndex = _timelineClips.Count; }
 
-        if (newIndex < 0)
+
+        // Handle drop from Media Library (add new item)
+        if (e.Data.Get("MediaLibraryItem") is ITimelineItem mediaItem)
         {
-             newIndex = _timelineClips.Count - 1;
+            ITimelineItem newItem;
+            if (mediaItem is VideoClip videoClip)
+            {
+                newItem = videoClip.CloneWithNewTimes(videoClip.TrimStart, videoClip.TrimEnd);
+            }
+            else if (mediaItem is ImageClip imageClip)
+            {
+                // Assuming ImageClip has a constructor to create a copy
+                newItem = new ImageClip(imageClip.SourcePath, imageClip.Duration);
+            }
+            else
+            {
+                return; // Should not happen
+            }
+            _timelineClips.Insert(newIndex, newItem);
         }
-
-        if (oldIndex != newIndex)
+        // Handle drop from Timeline (re-order existing item)
+        else if (e.Data.Get("TimelineItem") is ITimelineItem timelineItem)
         {
-            _timelineClips.Move(oldIndex, newIndex);
+            var oldIndex = _timelineClips.IndexOf(timelineItem);
+            if (oldIndex < 0) return;
+
+            // Adjust newIndex if moving an item from left to right in the list
+            if (oldIndex < newIndex)
+            {
+                newIndex--;
+            }
+
+            if (oldIndex != newIndex)
+            {
+                _timelineClips.Move(oldIndex, newIndex);
+            }
         }
     }
 }
