@@ -83,6 +83,11 @@ public partial class MainWindow : Window
                 {
                     var mediaInfo = await FFmpeg.GetMediaInfo(path);
                     var duration = mediaInfo.Duration;
+                    if (duration <= TimeSpan.Zero)
+                    {
+                        Console.WriteLine($"[ERROR] Media file '{Path.GetFileName(path)}' has a duration of zero or less and will be skipped.");
+                        continue;
+                    }
                     _mediaLibrary.Add(new VideoClip(path, TimeSpan.Zero, duration));
                 }
             }
